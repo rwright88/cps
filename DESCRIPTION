@@ -1,12 +1,18 @@
 Package: cps
-Title: What the Package Does (One Line, Title Case)
+Title: Tools for Working with IPUMS CPS Data
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Ray",
+           family = "Wright",
            role = c("aut", "cre"),
-           email = "first.last@example.com")
-Description: What the package does (one paragraph).
-License: What license it uses
+           email = "raywright88@gmail.com")
+Description: Tools for working with IPUMS CPS data.
+License: MIT + file LICENSE
+Imports: 
+    DBI,
+    dplyr,
+    RSQLite
 Encoding: UTF-8
 LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1

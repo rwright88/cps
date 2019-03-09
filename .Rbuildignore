@@ -1,2 +1,5 @@
+^other$
+^LICENSE\.md$
+^README\.Rmd$
 ^cps\.Rproj$
 ^\.Rproj\.user$
