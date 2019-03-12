@@ -4,7 +4,6 @@ library(tidyverse)
 library(cps)
 library(rwmisc)
 
-file_data <- "~/data/cps/cps.csv"
 file_db <- "~/data/cps/cpsdb"
 years <- 1971:2018
 vars <- c(
@@ -17,9 +16,9 @@ vars <- c(
 plot_weeks_hours <- function(data) {
   d <- data %>%
     mutate_at(c("wkswork1", "uhrsworkly"), ~ round(. / 10) * 10) %>%
-    group_by(sex, wkswork1, uhrsworkly) %>%
+    group_by(wkswork1, uhrsworkly) %>%
     summarise(n = sum(asecwt)) %>%
-    group_by(sex) %>%
+    ungroup() %>%
     mutate(d = n / sum(n)) %>%
     ungroup()
 
@@ -28,12 +27,11 @@ plot_weeks_hours <- function(data) {
     geom_tile() +
     geom_text(aes(label = format(round(d * 100, 1), nsmall = 1)), size = 3.5) +
     scale_fill_gradient(low = "#ffffff", high = "#1f77b4") +
-    facet_wrap("sex") +
     coord_cartesian(ylim = c(0, 80)) +
     theme_rw()
 }
 
-calcq <- function(data, by) {
+calc_q_ratio <- function(data, by) {
   by <- syms(by)
   probs <- seq(0.1, 0.9, 0.1)
 
@@ -44,33 +42,29 @@ calcq <- function(data, by) {
       q = list(Hmisc::wtd.quantile(earn, asecwt, probs = probs))
     ) %>%
     tidyr::unnest() %>%
-    ungroup()
+    ungroup() %>%
+    spread(p, q) %>%
+    mutate(r9050 = `0.9` / `0.5`)
 }
 
 # run ---------------------------------------------------------------------
 
 dat <- cps_db_read(file_db, years, vars)
 dat <- cps_clean(dat)
-dat <- filter(dat, age %in% 25:54, race == "white")
+dat <- filter(dat, sex == "male", age %in% 30:49, race == "white")
 
 rwmisc::summary2(dat)
-rwmisc::summary2_by(dat, "year", "earn")
+rwmisc::summary2(count(dat, year))
 
 plot_weeks_hours(dat)
 
-res <- dat %>%
-  filter(wkswork1 >= 40, uhrsworkly >= 30) %>%
-  calcq(by = c("year", "sex")) %>%
-  spread(p, q) %>%
-  mutate(r9050 = `0.9` / `0.5`)
+res <- calc_q_ratio(dat, by = "year")
 
-res %>%
-  arrange(desc(year))
+arrange(res, desc(year))
 
 res %>%
   ggplot(aes(year, r9050)) +
-  geom_point(size = 1.5, color = "#1f77b4") +
+  geom_point(size = 2, color = "#1f77b4") +
   geom_smooth(span = 1, se = FALSE, size = 0.5, color = "#1f77b4") +
-  scale_y_continuous(limits = c(1, NA)) +
-  facet_wrap("sex") +
+  scale_y_continuous(limits = c(1, NA), breaks = seq(1, 5, 0.5)) +
   theme_rw()
