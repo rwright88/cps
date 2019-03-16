@@ -17,19 +17,12 @@ cps_db_read <- function(file_db, years, vars) {
   YEAR <- NULL
 
   con <- DBI::dbConnect(RSQLite::SQLite(), file_db)
+  on.exit(DBI::dbDisconnect(con))
 
-  data <- con %>%
-    dplyr::tbl("cps") %>%
-    dplyr::filter(YEAR %in% years) %>%
-    dplyr::select(vars) %>%
-    dplyr::collect()
-
-  # # fix data types
-  # if ("INCEARN" %in% vars) {
-  #   data[["INCEARN"]] <- as.integer(data[["INCEARN"]])
-  # }
-
-  DBI::dbDisconnect(con)
+  data <- dplyr::tbl(src = con, "cps")
+  data <- dplyr::filter(data, YEAR %in% years)
+  data <- dplyr::select(data, vars)
+  data <- dplyr::collect(data)
   data
 }
 
@@ -40,7 +33,7 @@ cps_db_read <- function(file_db, years, vars) {
 #' @export
 cps_db_list <- function(file_db) {
   con <- DBI::dbConnect(RSQLite::SQLite(), file_db)
+  on.exit(DBI::dbDisconnect(con))
   vars <- DBI::dbListFields(con, "cps")
-  DBI::dbDisconnect(con)
   vars
 }
