@@ -26,11 +26,11 @@ rec_earn <- function(wage, bus, farm) {
 
 rec_education <- function(x) {
   out <- rep(NA_character_, length(x))
-  out[x %in% 0:71]    <- "less-hs"
-  out[x %in% 72:73]   <- "hs-ged"
-  out[x %in% 80:100]  <- "assoc-some"
-  out[x %in% 110:111] <- "bachelor"
-  out[x %in% 120:125] <- "advanced"
+  out[x %in% 0:69]    <- "less-hs"
+  out[x %in% 70:79]   <- "hs-ged"
+  out[x %in% 80:109]  <- "assoc-some"
+  out[x %in% 110:119] <- "bachelor"
+  out[x %in% 120:129] <- "advanced"
   out
 }
 
