@@ -47,24 +47,29 @@ calc_q_ratio <- function(data, by) {
     mutate(r9050 = `0.9` / `0.5`)
 }
 
+plot_q_ratio <- function(data, y) {
+  y_ <- sym(y)
+
+  data %>%
+    ggplot(aes(year, !!y_)) +
+    geom_point(size = 2, color = "#1f77b4") +
+    geom_smooth(span = 1, se = FALSE, size = 0.5, color = "#1f77b4") +
+    scale_y_continuous(limits = c(1, NA), breaks = seq(1, 5, 0.5)) +
+    theme_rw()
+}
+
 # run ---------------------------------------------------------------------
 
 dat <- cps_db_read(file_db, years, vars)
 dat <- cps_clean(dat)
-dat <- filter(dat, sex == "male", age %in% 30:49, race == "white")
+dat <- filter(dat, sex == "male", age %in% 25:54, race == "white")
 
-rwmisc::summary2(dat)
-rwmisc::summary2(count(dat, year))
-
-plot_weeks_hours(dat)
+rwmisc::summary2_by(dat, "year", "earn", probs = c(0.1, 0.25, 0.5, 0.75, 0.9)) %>%
+  arrange(desc(year))
 
 res <- calc_q_ratio(dat, by = "year")
 
-arrange(res, desc(year))
-
 res %>%
-  ggplot(aes(year, r9050)) +
-  geom_point(size = 2, color = "#1f77b4") +
-  geom_smooth(span = 1, se = FALSE, size = 0.5, color = "#1f77b4") +
-  scale_y_continuous(limits = c(1, NA), breaks = seq(1, 5, 0.5)) +
-  theme_rw()
+  arrange(desc(year))
+
+plot_q_ratio(res, y = "r9050")
