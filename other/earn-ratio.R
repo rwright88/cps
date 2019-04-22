@@ -13,25 +13,7 @@ vars <- c(
 
 # funs --------------------------------------------------------------------
 
-plot_weeks_hours <- function(data) {
-  d <- data %>%
-    mutate_at(c("wkswork1", "uhrsworkly"), ~ round(. / 10) * 10) %>%
-    group_by(wkswork1, uhrsworkly) %>%
-    summarise(n = sum(asecwt)) %>%
-    ungroup() %>%
-    mutate(d = n / sum(n)) %>%
-    ungroup()
-
-  d %>%
-    ggplot(aes(wkswork1, uhrsworkly, fill = d)) +
-    geom_tile() +
-    geom_text(aes(label = format(round(d * 100, 1), nsmall = 1)), size = 3.5) +
-    scale_fill_gradient(low = "#ffffff", high = "#1f77b4") +
-    coord_cartesian(ylim = c(0, 80)) +
-    theme_rw()
-}
-
-calc_q_ratio <- function(data, by) {
+calc_earn_r <- function(data, by) {
   by <- syms(by)
   probs <- seq(0.1, 0.9, 0.1)
 
@@ -41,13 +23,13 @@ calc_q_ratio <- function(data, by) {
       p = list(probs),
       q = list(Hmisc::wtd.quantile(earn, asecwt, probs = probs))
     ) %>%
-    tidyr::unnest() %>%
+    unnest() %>%
     ungroup() %>%
     spread(p, q) %>%
     mutate(r9050 = `0.9` / `0.5`)
 }
 
-plot_q_ratio <- function(data, y) {
+plot_earn_r <- function(data, y) {
   y_ <- sym(y)
 
   data %>%
@@ -62,14 +44,16 @@ plot_q_ratio <- function(data, y) {
 
 dat <- cps_db_read(file_db, years, vars)
 dat <- cps_clean(dat)
-dat <- filter(dat, sex == "male", age %in% 25:54, race == "white")
 
-rwmisc::summary2_by(dat, "year", "earn", probs = c(0.1, 0.25, 0.5, 0.75, 0.9)) %>%
+dat2 <- dat %>%
+  filter(sex == "male", age %in% 25:54)
+
+summary2_by(dat2, by = "year", vars = "earn") %>%
   arrange(desc(year))
 
-res <- calc_q_ratio(dat, by = "year")
+res <- calc_earn_r(dat2, by = "year")
 
 res %>%
   arrange(desc(year))
 
-plot_q_ratio(res, y = "r9050")
+plot_earn_r(res, y = "r9050")
