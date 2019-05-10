@@ -13,7 +13,7 @@ vars <- c(
 
 # funs --------------------------------------------------------------------
 
-calc_earn_r <- function(data, by) {
+calc_earn <- function(data, by) {
   by <- syms(by)
   probs <- seq(0.1, 0.9, 0.1)
 
@@ -29,7 +29,23 @@ calc_earn_r <- function(data, by) {
     mutate(r9050 = `0.9` / `0.5`)
 }
 
-plot_earn_r <- function(data, y) {
+calc_earn2 <- function(data, by) {
+  probs <- seq(0.1, 0.9, 0.1)
+  uniques <- unique(data[[by]])
+  out <- vector("list", length(uniques))
+
+  out <- lapply(uniques, function(.x) {
+    x <- data[data[[by]] == .x, ]
+    as.list(Hmisc::wtd.quantile(x$earn, x$asecwt, probs = probs))
+  })
+
+  out <- dplyr::bind_rows(out)
+  out[[by]] <- uniques
+  out$r9050 <- out$`90%` / out$`50%`
+  out
+}
+
+plot_earn <- function(data, y) {
   y_ <- sym(y)
 
   data %>%
@@ -51,9 +67,14 @@ dat2 <- dat %>%
 summary2_by(dat2, by = "year", vars = "earn") %>%
   arrange(desc(year))
 
-res <- calc_earn_r(dat2, by = "year")
+system.time({
+  res <- calc_earn(dat2, by = "year")
+})
+system.time({
+  res2 <- calc_earn2(dat2, by = "year")
+})
 
 res %>%
   arrange(desc(year))
 
-plot_earn_r(res, y = "r9050")
+plot_earn(res, y = "r9050")
