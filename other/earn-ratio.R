@@ -16,32 +16,19 @@ vars <- c(
 calc_earn <- function(data, by) {
   by <- syms(by)
   probs <- seq(0.1, 0.9, 0.1)
+  probsn <- str_c("p", probs * 100)
 
-  data %>%
+  out <- data %>%
     group_by(!!!by) %>%
     summarise(
-      p = list(probs),
-      q = list(Hmisc::wtd.quantile(earn, asecwt, probs = probs))
+      p = list(!!probsn),
+      q = list(Hmisc::wtd.quantile(earn, asecwt, probs = !!probs))
     ) %>%
     unnest() %>%
     ungroup() %>%
     spread(p, q) %>%
-    mutate(r9050 = `0.9` / `0.5`)
-}
+    mutate(r9050 = p90 / p50)
 
-calc_earn2 <- function(data, by) {
-  probs <- seq(0.1, 0.9, 0.1)
-  uniques <- unique(data[[by]])
-  out <- vector("list", length(uniques))
-
-  out <- lapply(uniques, function(.x) {
-    x <- data[data[[by]] == .x, ]
-    as.list(Hmisc::wtd.quantile(x$earn, x$asecwt, probs = probs))
-  })
-
-  out <- dplyr::bind_rows(out)
-  out[[by]] <- uniques
-  out$r9050 <- out$`90%` / out$`50%`
   out
 }
 
@@ -61,20 +48,18 @@ plot_earn <- function(data, y) {
 dat <- cps_db_read(file_db, years, vars)
 dat <- cps_clean(dat)
 
+# temp fix
+dat$wkswork1 <- as.numeric(dat$wkswork1)
+dat$uhrsworkly <- as.numeric(dat$uhrsworkly)
+
 dat2 <- dat %>%
   filter(sex == "male", age %in% 25:54)
 
 summary2_by(dat2, by = "year", vars = "earn") %>%
   arrange(desc(year))
 
-system.time({
-  res <- calc_earn(dat2, by = "year")
-})
-system.time({
-  res2 <- calc_earn2(dat2, by = "year")
-})
+res <- calc_earn(dat2, by = "year")
 
-res %>%
-  arrange(desc(year))
+arrange(res, desc(year))
 
 plot_earn(res, y = "r9050")
