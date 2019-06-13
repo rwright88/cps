@@ -23,6 +23,16 @@ cps_db_read <- function(file_db, years, vars) {
   data <- dplyr::filter(data, YEAR %in% years)
   data <- dplyr::select(data, vars)
   data <- dplyr::collect(data)
+
+  fix_int <- c(
+    "WKSWORK1",
+    "UHRSWORKLY"
+  )
+  fix_int <- vars[vars %in% fix_int]
+  for (var in fix_int) {
+    data[[var]] <- as.integer(data[[var]])
+  }
+
   data
 }
 
