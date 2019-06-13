@@ -8,22 +8,6 @@ rec_age <- function(x) {
   out
 }
 
-rec_earn <- function(wage, bus, farm) {
-  if (length(wage) != length(bus) || length(wage) != length(farm)) {
-    stop("Lengths of inputs must be the same", call. = FALSE)
-  }
-
-  wage[wage == 9999998] <- NA
-  bus[bus   == 9999998] <- NA
-  farm[farm == 9999998] <- NA
-  wage[wage == 9999999] <- 0
-  bus[bus   == 9999999] <- 0
-  farm[farm == 9999999] <- 0
-
-  out <- wage + bus + farm
-  out
-}
-
 rec_education <- function(x) {
   out <- rep(NA_character_, length(x))
   out[x %in% 0:69]    <- "less-hs"
@@ -68,6 +52,12 @@ rec_sex <- function(x) {
   out[x == 1] <- "male"
   out[x == 2] <- "female"
   out
+}
+
+rec_wage <- function(x) {
+  x[x == 9999998] <- NA
+  x[x == 9999999] <- 0
+  x
 }
 
 rec_work_class <- function(x) {

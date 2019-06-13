@@ -1,65 +1,64 @@
-# earnings quantiles ratio
+# wage quantiles ratio
 
 library(tidyverse)
 library(cps)
-library(rwmisc)
 
 file_db <- "~/data/cps/cpsdb"
 years <- 1971:2018
-vars <- c(
-  "YEAR", "ASECWT", "AGE", "SEX", "RACE", "HISPAN",
-  "WKSWORK1", "UHRSWORKLY", "INCWAGE", "INCBUS", "INCFARM"
-)
 
 # funs --------------------------------------------------------------------
 
-calc_earn <- function(data, by) {
-  by <- syms(by)
+get_data <- function(file_db, years) {
+  vars <- c(
+    "year", "asecwt", "sex", "age", "race", "hispan", "educ",
+    "wkswork1", "uhrsworkly", "incwage"
+  )
+  data <- cps::cps_db_read(file_db = file_db, years = years, vars = vars)
+  data <- cps::cps_clean(data)
+  data
+}
+
+calc_stats <- function(data, by) {
+  by_ <- syms(by)
   probs <- seq(0.1, 0.9, 0.1)
-  probsn <- str_c("p", probs * 100)
 
   out <- data %>%
-    group_by(!!!by) %>%
+    group_by(!!!by_) %>%
     summarise(
-      p = list(!!probsn),
-      q = list(Hmisc::wtd.quantile(earn, asecwt, probs = !!probs))
+      n = n(),
+      pop = sum(asecwt),
+      p = list(str_c("p", probs * 100)),
+      q = list(round(Hmisc::wtd.quantile(incwage, asecwt, probs = !!probs), -3))
     ) %>%
     unnest() %>%
-    ungroup() %>%
-    spread(p, q) %>%
-    mutate(r9050 = p90 / p50)
+    ungroup()
 
+  out$q[out$n < 100] <- NA
+  out <- spread(out, p, q)
+  out$r9050 <- out$p90 / out$p50
   out
 }
 
-plot_earn <- function(data, y) {
+plot_ratio <- function(data, y) {
   y_ <- sym(y)
 
   data %>%
     ggplot(aes(year, !!y_)) +
     geom_point(size = 2, color = "#1f77b4") +
     geom_smooth(span = 1, se = FALSE, size = 0.5, color = "#1f77b4") +
-    scale_y_continuous(limits = c(1, NA), breaks = seq(1, 5, 0.5)) +
-    theme_rw()
+    scale_y_continuous(limits = c(1, NA)) +
+    theme_bw()
 }
 
 # run ---------------------------------------------------------------------
 
-dat <- cps_db_read(file_db, years, vars)
-dat <- cps_clean(dat)
+data <- get_data(file_db, years)
 
-# temp fix
-dat$wkswork1 <- as.numeric(dat$wkswork1)
-dat$uhrsworkly <- as.numeric(dat$uhrsworkly)
+res <- data %>%
+  filter(sex == "male", age %in% 25:55, incwage > 0) %>%
+  calc_stats(by = "year")
 
-dat2 <- dat %>%
-  filter(sex == "male", age %in% 25:54)
-
-summary2_by(dat2, by = "year", vars = "earn") %>%
+res %>%
   arrange(desc(year))
 
-res <- calc_earn(dat2, by = "year")
-
-arrange(res, desc(year))
-
-plot_earn(res, y = "r9050")
+plot_ratio(res, y = "r9050")

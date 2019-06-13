@@ -20,6 +20,7 @@ cps_clean <- function(data) {
     "inctot",     rec_income,
     "marst",      rec_married,
     "sex",        rec_sex,
+    "incwage",    rec_wage,
     "classwly",   rec_work_class,
     "uhrsworkly", rec_work_hours,
     "year",       rec_year
@@ -35,16 +36,9 @@ cps_clean <- function(data) {
     data[[var]] <- fun(data[[var]])
   }
 
-  if (all(c("race", "hispan", "year") %in% names(data))) {
-    data[["race"]] <- rec_race(data[["race"]], data[["hispan"]], data[["year"]])
-    data[["hispan"]] <- NULL
-  }
-
-  if (all(c("incwage", "incbus", "incfarm") %in% names(data))) {
-    data[["earn"]] <- rec_earn(data[["incwage"]], data[["incbus"]], data[["incfarm"]])
-    data[["incwage"]] <- NULL
-    data[["incbus"]]  <- NULL
-    data[["incfarm"]] <- NULL
+  if (all(c("race", "hispan", "year") %in% vars)) {
+    data$race <- rec_race(data$race, data$hispan, data$year)
+    data$hispan <- NULL
   }
 
   data
