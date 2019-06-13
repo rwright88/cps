@@ -1,4 +1,4 @@
-# wage quantiles ratio
+# trend
 
 library(tidyverse)
 library(cps)
@@ -18,9 +18,8 @@ get_data <- function(file_db, years) {
   data
 }
 
-calc_stats <- function(data, by) {
+calc_stats <- function(data, by, probs = seq(0.25, 0.75, 0.25)) {
   by_ <- syms(by)
-  probs <- seq(0.1, 0.9, 0.1)
 
   out <- data %>%
     group_by(!!!by_) %>%
@@ -35,7 +34,6 @@ calc_stats <- function(data, by) {
 
   out$q[out$n < 100] <- NA
   out <- spread(out, p, q)
-  out$r9050 <- out$p90 / out$p50
   out
 }
 
@@ -60,5 +58,3 @@ res <- data %>%
 
 res %>%
   arrange(desc(year))
-
-plot_ratio(res, y = "r9050")
