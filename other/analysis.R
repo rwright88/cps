@@ -37,11 +37,14 @@ calc_stats <- function(data, by, probs = seq(0.1, 0.9, 0.01)) {
   out
 }
 
-plot_stats <- function(data, color) {
-  color_ <- sym(color)
+plot_stats <- function(data, color = NULL) {
+  if (!is.null(color)) {
+    p <- ggplot(data, aes(p, q, color = !!sym(color)))
+  } else {
+    p <- ggplot(data, aes(p, q))
+  }
 
-  data %>%
-    ggplot(aes(p, q, color = !!color_)) +
+  p +
     geom_point(size = 1.5, alpha = 0.2) +
     geom_smooth(span = 0.5, se = FALSE, size = 1) +
     scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1), minor_breaks = NULL) +
