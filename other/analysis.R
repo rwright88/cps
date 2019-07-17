@@ -84,12 +84,12 @@ plot_trend <- function(data, color = NULL, facet = NULL) {
 data <- get_data(file_db, years)
 
 data %>%
-  filter(year == max(year), age %in% 25:55, incwage > 0, uhrsworkly >= 20) %>%
+  filter(year == max(year), age %in% 25:55, incwage > 0) %>%
   calc_stats(by = "sex") %>%
   plot_latest(color = "sex")
 
 data %>%
-  filter(year >= 1990, age %in% 25:55, incwage > 0, uhrsworkly >= 20) %>%
+  filter(year >= 1990, age %in% 25:55, incwage > 0) %>%
   calc_stats(by = c("year", "sex")) %>%
-  filter(round(p * 100) %in% c(10, 30, 50, 70, 90)) %>%
+  filter(round(p * 100) %in% c(25, 50, 75)) %>%
   plot_trend(color = "sex", facet = "p")
