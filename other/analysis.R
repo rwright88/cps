@@ -84,14 +84,14 @@ plot_trend <- function(data, color = NULL, facet = NULL) {
 data <- get_data(file_db, years)
 
 data %>%
-  filter(year == max(year), sex == "male", age %in% 25:55, incwage > 7500) %>%
+  filter(year == max(year), sex == "male", age %in% 25:35, incwage > 7500) %>%
   calc_stats(by = "sex") %>%
   plot_latest(color = "sex") +
   geom_hline(aes(yintercept = 60000), linetype = "dashed") +
-  geom_hline(aes(yintercept = 60000 * 1.2), linetype = "dashed")
+  geom_hline(aes(yintercept = 60000 * 1.3), linetype = "dashed")
 
 data %>%
-  filter(year >= 1990, age %in% 25:55, incwage > 0) %>%
+  filter(year >= 1990, age %in% 25:35, incwage > 7500) %>%
   calc_stats(by = c("year", "sex")) %>%
   filter(round(p * 100) %in% c(25, 50, 75)) %>%
   plot_trend(color = "sex", facet = "p")
