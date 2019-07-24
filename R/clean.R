@@ -9,15 +9,12 @@
 #' @return Data frame.
 #' @export
 cps_clean <- function(data) {
-  if (!is.data.frame(data)) {
-    stop("`data` must be a data frame.", call. = FALSE)
-  }
+  stopifnot(is.data.frame(data))
 
   params <- dplyr::tribble(
     ~var,         ~fun,
     "age",        rec_age,
     "educ",       rec_education,
-    "inctot",     rec_income,
     "marst",      rec_married,
     "sex",        rec_sex,
     "incwage",    rec_wage,
@@ -26,11 +23,11 @@ cps_clean <- function(data) {
     "year",       rec_year
   )
 
-  data <- setNames(data, tolower(names(data)))
+  names(data) <- tolower(names(data))
   vars <- names(data)
   params <- params[params$var %in% vars, ]
 
-  for (i in seq_len(nrow(params))) {
+  for (i in seq_along(params[["var"]])) {
     var <- params[["var"]][[i]]
     fun <- params[["fun"]][[i]]
     data[[var]] <- fun(data[[var]])

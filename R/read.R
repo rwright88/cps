@@ -6,12 +6,8 @@
 #' @return Data frame.
 #' @export
 cps_db_read <- function(file_db, years, vars) {
-  if (!all(years >= 1962)) {
-    stop("`years` values must be greater than or equal to 1962", call. = FALSE)
-  }
-  if (!is.character(vars)) {
-    stop("`vars` must be a character vector", call. = FALSE)
-  }
+  stopifnot(is.numeric(years))
+  stopifnot(is.character(vars))
 
   vars <- toupper(vars)
   YEAR <- NULL
@@ -44,6 +40,5 @@ cps_db_read <- function(file_db, years, vars) {
 cps_db_list <- function(file_db) {
   con <- DBI::dbConnect(RSQLite::SQLite(), file_db)
   on.exit(DBI::dbDisconnect(con))
-  vars <- DBI::dbListFields(con, "cps")
-  vars
+  DBI::dbListFields(con, "cps")
 }

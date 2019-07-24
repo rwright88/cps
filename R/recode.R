@@ -18,12 +18,6 @@ rec_education <- function(x) {
   out
 }
 
-rec_income <- function(x) {
-  x[x == 9999998] <- NA
-  x[x == 9999999] <- 0
-  x
-}
-
 rec_married <- function(x) {
   out <- rep(NA, length(x))
   out[x %in% 1:2] <- TRUE
