@@ -50,7 +50,7 @@ plot_latest <- function(data, color = NULL) {
 
   out +
     geom_point(size = 1.5, alpha = 0.2) +
-    geom_smooth(span = 0.5, se = FALSE, size = 1) +
+    geom_smooth(method = "loess", span = 0.5, se = FALSE, size = 1) +
     scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1), minor_breaks = NULL) +
     scale_y_log10(breaks = seq(2e4, 2e5, 2e4), minor_breaks = NULL, labels = scales::comma) +
     scale_color_brewer(type = "qual", palette = "Set1") +
@@ -68,6 +68,7 @@ plot_trend <- function(data, color = NULL, facet = NULL) {
   out <- out +
     geom_point(size = 1.5, alpha = 0.2) +
     geom_smooth(method = "lm", se = FALSE, size = 1) +
+    scale_x_continuous(breaks = seq(1900, 2100, 10)) +
     scale_y_log10(breaks = seq(2e4, 2e5, 2e4), minor_breaks = NULL, labels = scales::comma) +
     scale_color_brewer(type = "qual", palette = "Set1") +
     theme_bw()
@@ -84,14 +85,12 @@ plot_trend <- function(data, color = NULL, facet = NULL) {
 data <- get_data(file_db, years)
 
 data %>%
-  filter(year == max(year), sex == "male", age %in% 25:35, incwage > 7500) %>%
+  filter(year == max(year), age %in% 25:35, incwage > 7500) %>%
   calc_stats(by = "sex") %>%
-  plot_latest(color = "sex") +
-  geom_hline(aes(yintercept = 60000), linetype = "dashed") +
-  geom_hline(aes(yintercept = 60000 * 1.3), linetype = "dashed")
+  plot_latest(color = "sex")
 
 data %>%
-  filter(year >= 1990, age %in% 25:35, incwage > 7500) %>%
+  filter(year >= 2000, age %in% 25:35, incwage > 7500) %>%
   calc_stats(by = c("year", "sex")) %>%
-  filter(round(p * 100) %in% c(25, 50, 75)) %>%
+  filter(round(p * 100) %in% c(10, 30, 50, 70, 90)) %>%
   plot_trend(color = "sex", facet = "p")
