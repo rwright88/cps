@@ -1,4 +1,6 @@
 # analysis
+# TODO:
+# inflate()
 
 library(cps)
 library(dplyr)
@@ -38,6 +40,13 @@ calc_stats <- function(data, by) {
 
   out$q[out$n < 100] <- NA
   out
+}
+
+inflate <- function(x, year) {
+  pcepi <- suppressMessages(vroom::vroom("~/R/other/data/pcepi.csv"))
+  pcepi_val <- pcepi$pcepi[match(year, pcepi$year)]
+  pcepi_cur <- max(pcepi_val)
+  x * pcepi_cur / pcepi_val
 }
 
 plot_latest <- function(data, color = NULL) {
@@ -90,7 +99,10 @@ data %>%
   plot_latest(color = "sex")
 
 data %>%
-  filter(year >= 2000, age %in% 25:35, incwage > 7500) %>%
-  calc_stats(by = c("year", "sex")) %>%
-  filter(round(p * 100) %in% c(10, 30, 50, 70, 90)) %>%
-  plot_trend(color = "sex", facet = "p")
+  filter(year >= 1970, sex == "male", age %in% 25:54, incwage > 0) %>%
+  mutate(age = round((age + 0.1) / 10) * 10) %>%
+  calc_stats(by = c("year", "age")) %>%
+  filter(round(p * 100) %in% c(10, 50, 90)) %>%
+  mutate(q = inflate(q, year)) %>%
+  mutate(p = reorder(p, desc(q))) %>%
+  plot_trend(color = "p", facet = "age")
