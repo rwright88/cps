@@ -1,14 +1,14 @@
 # analysis
-# TODO:
-# inflate()
 
 library(cps)
 library(dplyr)
 library(ggplot2)
 library(rwmisc)
 library(tidyr)
+library(vroom)
 
 file_db <- "~/data/cps/cpsdb"
+file_pcepi <- "other/pcepi.csv"
 years <- 1971:2018
 
 # funs --------------------------------------------------------------------
@@ -27,23 +27,21 @@ calc_stats <- function(data, by) {
   by_ <- syms(by)
   probs <- seq(0.1, 0.9, 0.01)
 
-  out <- data %>%
-    group_by(!!!by_) %>%
-    summarise(
-      n = n(),
-      pop = sum(asecwt),
-      p = list(!!probs),
-      q = list(rwmisc::wtd_quantile(incwage, asecwt, probs = !!probs))
-    ) %>%
-    unnest() %>%
-    ungroup()
-
+  out <- group_by(data, !!!by_)
+  out <- summarise(out,
+    n = n(),
+    pop = sum(asecwt),
+    p = list(!!probs),
+    q = list(rwmisc::wtd_quantile(incwage, asecwt, probs = !!probs))
+  )
+  out <- unnest(out)
+  out <- ungroup(out)
   out$q[out$n < 100] <- NA
   out
 }
 
-inflate <- function(x, year) {
-  pcepi <- suppressMessages(vroom::vroom("~/R/other/data/pcepi.csv"))
+inflate <- function(x, year, file_pcepi) {
+  pcepi <- suppressMessages(vroom(file_pcepi))
   pcepi_val <- pcepi$pcepi[match(year, pcepi$year)]
   pcepi_cur <- max(pcepi_val)
   x * pcepi_cur / pcepi_val
@@ -76,8 +74,8 @@ plot_trend <- function(data, color = NULL, facet = NULL) {
 
   out <- out +
     geom_point(size = 1.5, alpha = 0.2) +
-    geom_smooth(method = "lm", se = FALSE, size = 1) +
-    scale_x_continuous(breaks = seq(1900, 2100, 10)) +
+    geom_smooth(method = "loess", span = 1, se = FALSE, size = 1) +
+    scale_x_continuous(breaks = seq(1900, 2100, 10), minor_breaks = NULL) +
     scale_y_log10(breaks = seq(2e4, 2e5, 2e4), minor_breaks = NULL, labels = scales::comma) +
     scale_color_brewer(type = "qual", palette = "Set1") +
     theme_bw()
@@ -97,14 +95,12 @@ data %>%
   filter(year == max(year), sex == "male", age %in% 25:54, incwage > 0) %>%
   mutate(age = round((age + 0.1) / 10) * 10) %>%
   calc_stats(by = "age") %>%
-  mutate(age = factor(age)) %>%
+  mutate(age = reorder(age, desc(q))) %>%
   plot_latest(color = "age")
 
 data %>%
-  filter(year >= 1970, sex == "male", age %in% 25:54, incwage > 0) %>%
-  mutate(age = round((age + 0.1) / 10) * 10) %>%
-  calc_stats(by = c("year", "age")) %>%
+  filter(age %in% 25:35, incwage > 0, wkswork1 >= 40, uhrsworkly >= 30) %>%
+  calc_stats(by = c("year", "sex")) %>%
   filter(round(p * 100) %in% c(10, 30, 50, 70, 90)) %>%
-  mutate(q = inflate(q, year)) %>%
-  mutate(p = reorder(p, desc(q))) %>%
-  plot_trend(color = "p", facet = "age")
+  mutate(q = inflate(q, year, file_pcepi = file_pcepi)) %>%
+  plot_trend(color = "sex", facet = "p")
