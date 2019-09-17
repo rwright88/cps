@@ -73,10 +73,10 @@ plot_trend <- function(data, color = NULL, facet = NULL) {
   }
 
   out <- out +
-    geom_point(size = 1.5, alpha = 0.2) +
-    geom_smooth(method = "loess", span = 1, se = FALSE, size = 1) +
+    geom_point(size = 1.5) +
+    geom_line(size = 1) +
     scale_x_continuous(breaks = seq(1900, 2100, 10), minor_breaks = NULL) +
-    scale_y_log10(breaks = seq(2e4, 2e5, 2e4), minor_breaks = NULL, labels = scales::comma) +
+    scale_y_log10(breaks = seq(1e4, 2e5, 1e4), minor_breaks = NULL, labels = scales::comma) +
     scale_color_brewer(type = "qual", palette = "Set1") +
     theme_bw()
 
@@ -99,8 +99,11 @@ data %>%
   plot_latest(color = "age")
 
 data %>%
-  filter(age %in% 25:35, incwage > 0, wkswork1 >= 40, uhrsworkly >= 30) %>%
-  calc_stats(by = c("year", "sex")) %>%
-  filter(round(p * 100) %in% c(10, 30, 50, 70, 90)) %>%
+  filter(age %in% 25:35, !is.na(race), incwage > 0) %>%
+  calc_stats(by = c("year", "sex", "race")) %>%
+  filter(p >= 0.4 & p <= 0.6) %>%
+  group_by(year, sex, race) %>%
+  summarise(n = mean(n), pop = mean(pop), q = mean(q)) %>%
+  ungroup() %>%
   mutate(q = inflate(q, year, file_pcepi = file_pcepi)) %>%
-  plot_trend(color = "sex", facet = "p")
+  plot_trend(color = "race", facet = "sex")
