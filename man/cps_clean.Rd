@@ -13,5 +13,5 @@ cps_clean(data)
 Data frame.
 }
 \description{
-Currently, this only cleans/recodes a selection of variables.
+Clean and recode a selection of variables.
 }

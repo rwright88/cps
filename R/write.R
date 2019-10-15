@@ -10,10 +10,6 @@ cps_db_write <- function(file_data, file_db) {
   if (!file.exists(file_data)) {
     stop("`file_data` does not exist.", call. = FALSE)
   }
-  nms <- names(read.csv(file_data, nrows = 1))
-  n_cols <- length(nms)
-  types  <- rep("integer", n_cols)
-  names(types) <- nms
 
   if (file.exists(file_db)) {
     file.remove(file_db)
@@ -26,7 +22,6 @@ cps_db_write <- function(file_data, file_db) {
     name = "cps",
     value = file_data,
     overwrite = TRUE,
-    field.types = types,
     sep = ","
   )
 

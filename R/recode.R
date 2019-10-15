@@ -1,7 +1,3 @@
-# age topcode = 80 is lowest
-# education = unsure?
-# hours topcode = 99
-
 rec_age <- function(x) {
   out <- rep(NA_integer_, length(x))
   out[x %in% 0:79] <- x[x %in% 0:79]
